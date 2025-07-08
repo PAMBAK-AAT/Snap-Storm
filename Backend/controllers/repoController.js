@@ -1,37 +1,186 @@
 
 
+const mongoose = require("mongoose");
+const Repository = require("../models/repoModel");
+const User = require("../models/userModel");
+const Issue = require("../models/issueModel");
 
-const createRepository = (req, res) => {
-    res.send("Repository created!");
+const connectMongoose = require("../config/db");
+
+async function createRepository (req, res) {
+    
+    const {name, description, content, visibility, owner, issues} = req.body;
+
+    try{
+
+        await connectMongoose();
+
+        if(!name){
+            return res.status(400).json({error: "Repository name is required"});
+        }
+
+        if(!mongoose.Types.ObjectId.isValid(owner)){
+            return res.status(400).json({error: "Invalid owner ID"});
+        }
+
+        const newRepository = new Repository({
+            name,
+            description,
+            content: content || [],
+            visibility: visibility || false, // default to private if not specified
+            owner,
+            issues: issues || []
+        });
+
+        const result = await newRepository.save();
+
+        res.status(201).json({
+            message:"Repository created successfully",
+            repositoryID: result._id,
+        });
+
+    }catch(err){
+        console.error("Error creating repository:", err.message);
+        res.status(500).send("Internal Server Error");
+    }
 }
 
-// 
-const getAllRepository = (req, res) => {
-    res.send("All Repository fetched!");
+ 
+async function getAllRepository (req, res)  {
+    
+    try {
+        
+        const repositories = await Repository.find({}).populate("owner").populate("issues");
+        
+        if (repositories.length === 0) {
+            return res.status(404).json({ message: "No public repositories found." });
+        }
+
+        res.status(200).json(repositories);
+    } catch (err) {
+        console.error("Error fetching repositories:", err.message);
+        res.status(500).send("Internal Server Error");
+    }
 }
 
-const fetchRepositoryById = (req, res) => {
-    res.send("Repository details fetched!");
+async function fetchRepositoryById (req, res) {
+    const {id} = req.params;
+    try{
+        const repository = await Repository.find({_id: id})
+            .populate("owner")
+            .populate("issues");
+
+        if (!repository) {
+            return res.status(404).json({ message: "Repository not found." });
+        }
+
+        res.status(200).json(repository);
+    }catch(err){
+        console.error("Error fetching repository by ID:", err.message);
+        res.status(500).send("Internal Server Error");
+    }
 }
 
-const fetchRepositoryByName = (req, res) => {
-    res.send("Repo details fetched by name !");
+async function fetchRepositoryByName  (req, res) {
+    const { name } = req.params;
+    try{
+        const repository = await Repository.find({name})
+            .populate("owner")
+            .populate("issues");
+
+        if (!repository) {
+            return res.status(404).json({ message: "Repository not found." });
+        }
+
+        res.status(200).json(repository);
+    }catch(err){
+        console.error("Error fetching repository by ID:", err.message);
+        res.status(500).send("Internal Server Error");
+    }
 }
 
-const fetchRepositoryForCurrentUser = (req, res) => {
-    res.send("Repo for logged In user has been fetched!");
+
+// Now all these functions can only be accessed by the user if he is logged in
+async function fetchRepositoryForCurrentUser (req, res) {
+    const userId = req.user;
+
+    try{
+        const repositories = await Repository.find({owner: userId});
+        if(!repositories || repositories.length === 0){
+            return res.status(404).json({ message: "No repositories found for this user." });
+        }
+
+        res.json({message: "Repositories found successfully", repositories});
+            
+    }catch(err){
+        console.error("Error fetching repositories for user:", err.message);
+        res.status(500).send("Internal Server Error");
+    }
 }
 
-const updateRepositoryById = (req, res) => {
-    res.send("Repo updated !");
+async function updateRepositoryById  (req, res)  {
+    const { id } = req.params;
+    const {content, description} = req.body;
+
+    try{
+        const repository = await Repository.findById(id);
+        if(!repository) {
+            return res.status(404).json({ message: "Repository not found." });
+        }
+
+        repository.content.push(content);
+        repository.description = description || repository.description; // Update description if provided
+
+        const updatedRepository = await repository.save();
+
+        res.json({
+            message: "Repository updated successfully",
+            repository: updatedRepository
+        });
+
+    }catch(err){
+        console.error("Error updating repository:", err.message);
+        res.status(500).send("Internal Server Error");
+    }
 }
 
-const toggleVisibilityById = (req, res) => {
-    res.send("Visibility Toggled !");
+async function toggleVisibilityById (req, res)  {
+    const { id } = req.params;
+
+    try{
+        const repository = await Repository.findById(id);
+        if(!repository) {
+            return res.status(404).json({ message: "Repository not found." });
+        }
+
+        repository.visibility = !repository.visibility; // Toggle visibility
+
+        const updatedRepository = await repository.save();
+
+        res.json({
+            message: "Repository toggled visibility successfully",
+            repository: updatedRepository
+        });
+
+    }catch(err){
+        console.error("Error in toggle the visibility:", err.message);
+        res.status(500).send("Internal Server Error");
+    }
 }
 
-const deleteRepository = (req, res) => {
-    res.send("Repository deleted!");
+async function deleteRepository (req, res) {
+    const {id} = req.params;
+    try{
+        const repository = await Repository.findByIdAndDelete(id);
+        if(!repository) {
+            return res.status(404).json({ message: "Repository not found." });
+        }
+
+        res.json({ message: "Repository deleted successfully." });
+    }catch(err){
+        console.error("Error deleting repository:", err.message);
+        res.status(500).send("Internal Server Error");
+    }
 }
 
 // deleteRepository, toggleVisibilityById, updateRepositoryById, fetchRepositoryForCurrentUser, createRepository -> All these are Authenticated routes

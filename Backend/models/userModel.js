@@ -6,17 +6,17 @@ const { Schema } = mongoose;
 const UserSchema = new Schema({
 
     username:{
-        type: string,
+        type: String,
         required: true,
         unique: true,
     },
     email: {
-        type: string,
+        type: String,
         required: true,
         unique: true,
     },
     password: {
-        type: string,
+        type: String,
     },
     repositories: [
         {
@@ -43,7 +43,7 @@ const UserSchema = new Schema({
 
 const User = mongoose.model("User", UserSchema);
 
-export default User;
+module.exports = User;
 
 
 

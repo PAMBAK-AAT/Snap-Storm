@@ -24,10 +24,10 @@ const IssueSchema = new Schema({
         enum: ["open", "closed"], // you have to choose any one option from there,
         default: "open",
     }
-});
+}, {collection: "issues"});
 
 const Issue = mongoose.model("Issue", IssueSchema);
-export default Issue;
+module.exports =  Issue;
 
 
 
