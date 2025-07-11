@@ -2,7 +2,7 @@
 
 
 // All packages for starting our server and connecting it to the Database
-const express = require("express");
+
 const cors = require("cors");
 const dotenv = require("dotenv");
 const bodyParser = require("body-parser");
@@ -10,6 +10,11 @@ const mongoose = require("mongoose");
 const http = require("http");
 const { Server } = require("socket.io");
 const mainRouter = require("./routes/main.router");
+
+const express = require("express");
+const app = express();
+
+app.use(express.json()); // <== REQUIRED to read JSON body
 
 
 // 0.0.0.0/0 -> THis IP address will provide access of our database to every part of the world.

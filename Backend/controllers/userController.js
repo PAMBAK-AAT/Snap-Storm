@@ -29,6 +29,7 @@ async function connectClient() {
 
 async function signup(req, res) {
   const { username, password, email } = req.body;
+  console.log("SIGNUP REQUEST BODY:", req.body);
   try {
     await connectClient();
     const db = client.db("Snap-Storm");
@@ -54,11 +55,11 @@ async function signup(req, res) {
     const result = await usersCollection.insertOne(newUser);
 
     const token = jwt.sign(
-      { id: result.insertId },
+      { id: result.insertedId }, 
       process.env.JWT_SECRET_KEY,
       { expiresIn: "168h" }
     );
-    res.json({ token, userId: result.insertId });
+    res.json({ token, userId: result.insertedId });
   } catch (err) {
     console.error("Error during signup : ", err.message);
     res.status(500).send("Server error");
@@ -84,7 +85,7 @@ async function login(req, res) {
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, {
-      expiresIn: "",
+      expiresIn: "168h",
     });
     res.json({ token, userId: user._id });
   } catch (err) {
