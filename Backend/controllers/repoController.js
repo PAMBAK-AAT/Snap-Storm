@@ -7,6 +7,53 @@ const Issue = require("../models/issueModel");
 
 const connectMongoose = require("../config/db");
 
+
+
+const path = require("path");
+const fs = require("fs").promises;
+const { addRepo } = require("./add");
+const { commitRepo } = require("./commit");
+const { pushRepo } = require("./push");
+
+async function pushToRepository(req, res) {
+    const { id } = req.params;
+    const commitMessage = req.body.message;
+    const file = req.file;
+
+    if (!file || !commitMessage) {
+        return res.status(400).json({ error: "File and message are required" });
+    }
+
+    try {
+        const originalPath = path.join(process.cwd(), file.path);
+
+        // 1. Add file to staging
+        await addRepo(originalPath);
+
+        // 2. Commit with message
+        await commitRepo(commitMessage);
+
+        // await Repository.findByIdAndUpdate(repoId, {
+        //     $addToSet: { content: req.file.filename } // ✅ Prevents duplicates
+        // });
+
+        // 3. Push to S3
+        await pushRepo();
+
+        await fs.unlink(originalPath);
+
+        res.status(200).json({ message: "File pushed successfully" });
+
+    } catch (err) {
+        console.error("Error pushing file:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+
+
+
+
 async function createRepository(req, res) {
 
     const { name, description, content, visibility, owner, issues } = req.body;
@@ -203,4 +250,5 @@ module.exports = {
     getAllRepository,
     fetchRepositoryById,
     fetchRepositoryByName,
+    pushToRepository,
 }

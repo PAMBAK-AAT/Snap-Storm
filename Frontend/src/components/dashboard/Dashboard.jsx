@@ -1,149 +1,154 @@
+
+
+import { Link } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import Navbar from "../Navbar";
 
 const Dashboard = () => {
-  const [repositories, setRepositories] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [suggestedRepositories, setSuggestedRepositories] = useState([]);
-  const [searchResults, setSearchResults] = useState([]);
+    const [repositories, setRepositories] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [suggestedRepositories, setSuggestedRepositories] = useState([]);
+    const [searchResults, setSearchResults] = useState([]);
 
-  useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    if (!userId) return;
+    useEffect(() => {
+        const userId = localStorage.getItem("userId");
+        if (!userId) return;
 
-    const fetchRepositories = async () => {
-      try {
-        const res = await fetch(`http://localhost:3000/repo/user/${userId}`);
-        const data = await res.json();
-        setRepositories(data.repositories || []);
-      } catch {
-        setRepositories([]);
-      }
-    };
+        const fetchRepositories = async () => {
+            try {
+                const res = await fetch(`http://localhost:3000/repo/user/${userId}`);
+                const data = await res.json();
+                setRepositories(data.repositories || []);
+            } catch {
+                setRepositories([]);
+            }
+        };
 
-    const fetchSuggested = async () => {
-      try {
-        const res = await fetch("http://localhost:3000/repo/all");
-        const data = await res.json();
-        setSuggestedRepositories(data || []);
-      } catch {
-        setSuggestedRepositories([]);
-      }
-    };
+        const fetchSuggested = async () => {
+            try {
+                const res = await fetch("http://localhost:3000/repo/all");
+                const data = await res.json();
+                setSuggestedRepositories(data || []);
+            } catch {
+                setSuggestedRepositories([]);
+            }
+        };
 
-    fetchRepositories();
-    fetchSuggested();
-  }, []);
+        fetchRepositories();
+        fetchSuggested();
+    }, []);
 
-  useEffect(() => {
-    if (!searchQuery) setSearchResults(repositories);
-    else {
-      const filtered = repositories.filter((repo) =>
-        repo.name?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setSearchResults(filtered);
-    }
-  }, [searchQuery, repositories]);
-
-  return (
-    <>
-      <Navbar />
-
-      {/* 🔆 Particle Background */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black" />
-        <div className="absolute inset-0">
-          {[...Array(100)].map((_, i) => {
-            const neonColors = [
-              "bg-cyan-300",
-              "bg-pink-400",
-              "bg-purple-400",
-              "bg-blue-400",
-              "bg-emerald-300",
-              "bg-fuchsia-400",
-              "bg-orange-400",
-              "bg-lime-300",
-            ];
-            const color = neonColors[Math.floor(Math.random() * neonColors.length)];
-            return (
-              <span
-                key={i}
-                className={`absolute rounded-full opacity-100 blur-sm ${color} animate-elliptic-glow`}
-                style={{
-                  width: "14px",
-                  height: "14px",
-                  left: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 6}s`,
-                  animationDuration: `${Math.random() * 5 + 4}s`,
-                  filter: "drop-shadow(0 0 8px white)",
-                }}
-              />
+    useEffect(() => {
+        if (!searchQuery) setSearchResults(repositories);
+        else {
+            const filtered = repositories.filter((repo) =>
+                repo.name?.toLowerCase().includes(searchQuery.toLowerCase())
             );
-          })}
-        </div>
-      </div>
+            setSearchResults(filtered);
+        }
+    }, [searchQuery, repositories]);
 
-      {/* Dashboard */}
-      <div className="min-h-screen p-6 md:p-12 text-white flex flex-col lg:flex-row gap-8">
-        {/* Suggested Repositories */}
-        <aside className="bg-white/10 border border-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-lg w-full lg:w-1/4">
-          <h3 className="text-xl font-bold mb-4 text-cyan-300">Suggested Repositories</h3>
-          {suggestedRepositories.length > 0 ? (
-            suggestedRepositories.map((repo) => (
-              <div key={repo._id} className="mb-4">
-                <h4 className="text-lg font-semibold text-blue-300">{repo.name}</h4>
-                <p className="text-gray-300 text-sm">{repo.description}</p>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-400">No suggestions found.</p>
-          )}
-        </aside>
+    return (
+        <>
+            <Navbar />
 
-        {/* User Repositories */}
-        <main className="flex-1 bg-white/10 border border-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-lg">
-          <h2 className="text-2xl font-bold mb-6 text-cyan-400">Your Repositories</h2>
+            {/* 🔆 Particle Background */}
+            <div className="fixed inset-0 -z-10 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black" />
+                <div className="absolute inset-0">
+                    {[...Array(100)].map((_, i) => {
+                        const neonColors = [
+                            "bg-cyan-300",
+                            "bg-pink-400",
+                            "bg-purple-400",
+                            "bg-blue-400",
+                            "bg-emerald-300",
+                            "bg-fuchsia-400",
+                            "bg-orange-400",
+                            "bg-lime-300",
+                        ];
+                        const color = neonColors[Math.floor(Math.random() * neonColors.length)];
+                        return (
+                            <span
+                                key={i}
+                                className={`absolute rounded-full opacity-100 blur-sm ${color} animate-elliptic-glow`}
+                                style={{
+                                    width: "14px",
+                                    height: "14px",
+                                    left: `${Math.random() * 100}%`,
+                                    animationDelay: `${Math.random() * 6}s`,
+                                    animationDuration: `${Math.random() * 5 + 4}s`,
+                                    filter: "drop-shadow(0 0 8px white)",
+                                }}
+                            />
+                        );
+                    })}
+                </div>
+            </div>
 
-          <div className="mb-6">
-            <input
-              type="text"
-              value={searchQuery}
-              placeholder="Search..."
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full p-3 rounded-xl bg-gray-900 border border-cyan-400 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 text-white"
-            />
-          </div>
+            {/* Dashboard */}
+            <div className="min-h-screen p-6 md:p-12 text-white flex flex-col lg:flex-row gap-8">
+                {/* Suggested Repositories */}
+                <aside className="bg-white/10 border border-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-lg w-full lg:w-1/4">
+                    <h3 className="text-xl font-bold mb-4 text-cyan-300">Suggested Repositories</h3>
+                    {suggestedRepositories.length > 0 ? (
+                        suggestedRepositories.map((repo) => (
+                            <div key={repo._id} className="mb-4">
+                                <h4 className="text-lg font-semibold text-blue-300">{repo.name}</h4>
+                                <p className="text-gray-300 text-sm">{repo.description}</p>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-gray-400">No suggestions found.</p>
+                    )}
+                </aside>
 
-          {searchResults.length === 0 && (
-            <p className="text-gray-400">No repositories found.</p>
-          )}
+                {/* User Repositories */}
+                <main className="flex-1 bg-white/10 border border-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-lg">
+                    <h2 className="text-2xl font-bold mb-6 text-cyan-400">Your Repositories</h2>
 
-          <div className="space-y-4">
-            {searchResults.map((repo) => (
-              <div
-                key={repo._id}
-                className="p-4 bg-gray-800 border border-white/10 rounded-xl shadow-md hover:shadow-xl transition"
-              >
-                <h4 className="text-lg font-semibold text-blue-300">{repo.name}</h4>
-                <p className="text-sm text-gray-300">{repo.description}</p>
-              </div>
-            ))}
-          </div>
-        </main>
+                    <div className="mb-6">
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            placeholder="Search..."
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full p-3 rounded-xl bg-gray-900 border border-cyan-400 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 text-white"
+                        />
+                    </div>
 
-        {/* Right Sidebar */}
-        <aside className="bg-white/10 border border-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-lg w-full lg:w-1/4">
-          <h3 className="text-xl font-bold mb-4 text-cyan-300">Upcoming Events</h3>
-          <ul className="space-y-2 text-sm text-gray-300">
-            <li className="bg-gray-800 p-3 rounded-xl">Tech Conference - Dec 15</li>
-            <li className="bg-gray-800 p-3 rounded-xl">Developer Meetup - Dec 25</li>
-            <li className="bg-gray-800 p-3 rounded-xl">React Summit - Jan 5</li>
-          </ul>
-        </aside>
-      </div>
+                    {searchResults.length === 0 && (
+                        <p className="text-gray-400">No repositories found.</p>
+                    )}
 
-      {/* Keyframes */}
-      <style>{`
+                    <div className="space-y-4">
+                        {searchResults.map((repo) => (
+                            <Link
+                                to={`/repo/${repo._id}`}
+                                key={repo._id}
+                                className="block p-4 bg-gray-800 border border-white/10 rounded-xl shadow-md hover:shadow-xl transition hover:ring-2 hover:ring-cyan-400"
+                            >
+                                <h4 className="text-lg font-semibold text-blue-300">{repo.name}</h4>
+                                <p className="text-sm text-gray-300">{repo.description}</p>
+                            </Link>
+
+                        ))}
+                    </div>
+                </main>
+
+                {/* Right Sidebar */}
+                <aside className="bg-white/10 border border-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-lg w-full lg:w-1/4">
+                    <h3 className="text-xl font-bold mb-4 text-cyan-300">Upcoming Events</h3>
+                    <ul className="space-y-2 text-sm text-gray-300">
+                        <li className="bg-gray-800 p-3 rounded-xl">Tech Conference - Dec 15</li>
+                        <li className="bg-gray-800 p-3 rounded-xl">Developer Meetup - Dec 25</li>
+                        <li className="bg-gray-800 p-3 rounded-xl">React Summit - Jan 5</li>
+                    </ul>
+                </aside>
+            </div>
+
+            {/* Keyframes */}
+            <style>{`
         @keyframes elliptic-glow {
           0% {
             transform: translateY(100vh) scale(1) rotate(0deg);
@@ -165,8 +170,8 @@ const Dashboard = () => {
           will-change: transform, opacity;
         }
       `}</style>
-    </>
-  );
+        </>
+    );
 };
 
 export default Dashboard;
