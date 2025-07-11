@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const Navbar = () => {
   return (
-    <nav className="fixed top-1 left-1/2 transform -translate-x-1/2 w-[80%] max-w-4xl bg-gray-400 backdrop-blur-md border border-gray-200 shadow-md px-4 py-2 rounded-full flex items-center justify-between z-50">
+    <nav className="fixed top-2 left-1/2 transform -translate-x-1/2 w-[85%] max-w-4xl bg-gray-400 backdrop-blur-md border border-gray-200 shadow-md px-4 py-1 rounded-full flex items-center justify-between z-50">
       {/* Logo */}
       <Link to="/" className="flex items-center gap-2 cursor-pointer">
         <img
