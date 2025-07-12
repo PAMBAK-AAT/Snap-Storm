@@ -17,7 +17,10 @@ const RepositorySchema = new Schema({
     },
     content: [
         {
-            type: String,
+            originalName: String,
+            storedName: String,
+            commitId: String, // (optional but useful)
+            date: { type: Date, default: Date.now }
         }
     ],
     visibility: {
@@ -35,8 +38,8 @@ const RepositorySchema = new Schema({
         }
     ],
 
-}, {collection: "repositories"});
+}, { collection: "repositories" });
 
 const Repository = mongoose.model("Repository", RepositorySchema);
-module.exports =  Repository;
+module.exports = Repository;
 

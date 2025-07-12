@@ -22,6 +22,8 @@ repoRouter.patch("/repo/toggle/:id", repoController.toggleVisibilityById);
 repoRouter.put("/repo/update/:id", repoController.updateRepositoryById);
 
 repoRouter.post("/repo/:id/push", upload.single("file"), repoController.pushToRepository);
+repoRouter.get("/repo/:id/file/:filename", repoController.getFileContentFromS3);
+
 
 
 module.exports = repoRouter;

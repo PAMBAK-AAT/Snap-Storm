@@ -1,13 +1,11 @@
 
+// ====== 📁 BACKEND: pushToRepository Controller ======
 
 const mongoose = require("mongoose");
 const Repository = require("../models/repoModel");
 const User = require("../models/userModel");
 const Issue = require("../models/issueModel");
-
 const connectMongoose = require("../config/db");
-
-
 
 const path = require("path");
 const fs = require("fs").promises;
@@ -15,44 +13,98 @@ const { addRepo } = require("./add");
 const { commitRepo } = require("./commit");
 const { pushRepo } = require("./push");
 
-async function pushToRepository(req, res) {
-    const { id } = req.params;
-    const commitMessage = req.body.message;
-    const file = req.file;
 
-    if (!file || !commitMessage) {
-        return res.status(400).json({ error: "File and message are required" });
+const { s3, S3_BUCKET } = require("../config/aws-config");
+
+// GET /repo/:id/file/:filename
+async function getFileContentFromS3(req, res) {
+  const { id, filename } = req.params;
+
+  try {
+    const repo = await Repository.findById(id);
+    if (!repo) return res.status(404).json({ error: "Repository not found" });
+
+    // 🔍 Try to match filename exactly (case-insensitive matching optional)
+    const fileObj = repo.content.find(
+      (f) => f.originalName === filename
+      // Optional: f.originalName.toLowerCase() === filename.toLowerCase()
+    );
+
+    if (!fileObj) {
+      console.warn("🚫 File not found in metadata for:", filename);
+      return res.status(404).json({ error: "File not found in metadata" });
     }
 
-    try {
-        const originalPath = path.join(process.cwd(), file.path);
+    const s3Key = `commits/${fileObj.commitId}/${fileObj.storedName}`;
+    console.log("🔑 Fetching S3 file using key:", s3Key);
 
-        // 1. Add file to staging
-        await addRepo(originalPath);
+    const params = {
+      Bucket: S3_BUCKET,
+      Key: s3Key,
+    };
 
-        // 2. Commit with message
-        await commitRepo(commitMessage);
+    const data = await s3.getObject(params).promise();
 
-        // await Repository.findByIdAndUpdate(repoId, {
-        //     $addToSet: { content: req.file.filename } // ✅ Prevents duplicates
-        // });
+    // ✅ Send file content as plain text
+    res.setHeader("Content-Type", "text/plain");
+    return res.send(data.Body.toString("utf-8"));
 
-        // 3. Push to S3
-        await pushRepo();
+  } catch (err) {
+    console.error("❌ Error fetching file from S3:", err.code || err.message);
 
-        await fs.unlink(originalPath);
-
-        res.status(200).json({ message: "File pushed successfully" });
-
-    } catch (err) {
-        console.error("Error pushing file:", err);
-        res.status(500).json({ error: "Internal Server Error" });
+    if (err.code === "NoSuchKey") {
+      return res.status(404).json({
+        error: "File not found in S3. Check commitId or stored filename.",
+      });
     }
+
+    return res.status(500).json({ error: "Internal server error" });
+  }
 }
 
 
 
+async function pushToRepository(req, res) {
+  const { id } = req.params;
+  const commitMessage = req.body.message;
+  const file = req.file;
 
+  if (!file || !commitMessage) {
+    return res.status(400).json({ error: "File and message are required" });
+  }
+
+  try {
+    const originalPath = path.join(process.cwd(), file.path);
+
+    // 1. Add to staging
+    await addRepo(originalPath);
+
+    // 2. Commit and get commit ID
+    const latestCommitId = await commitRepo(commitMessage); // ✅ get commitId
+
+    // 3. Push to S3
+    await pushRepo(latestCommitId);
+
+    // 4. Update DB with file metadata
+    await Repository.findByIdAndUpdate(id, {
+      $push: {
+        content: {
+          originalName: file.originalname,
+          storedName: file.filename,
+          commitId: latestCommitId,
+        },
+      },
+    });
+
+    // 5. Cleanup
+    await fs.unlink(originalPath);
+
+    res.status(200).json({ message: "✅ File pushed successfully and repo updated." });
+  } catch (err) {
+    console.error("❌ Error pushing file:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
 
 async function createRepository(req, res) {
 
@@ -251,4 +303,5 @@ module.exports = {
     fetchRepositoryById,
     fetchRepositoryByName,
     pushToRepository,
+    getFileContentFromS3
 }
