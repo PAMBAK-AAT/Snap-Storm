@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@babel/plugin-syntax-jsx": "^7.27.1",
+    "@headlessui/react": "^2.2.4",
+    "@heroicons/react": "^2.2.0",
     "@primer/css": "^22.0.1",
     "@primer/react": "^37.27.0",
     "@tailwindcss/vite": "^4.1.11",
