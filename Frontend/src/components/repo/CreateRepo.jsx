@@ -30,7 +30,7 @@ const CreateRepo = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/repo/create", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/repo/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -102,7 +102,7 @@ const CreateRepo = () => {
 
         <button
           type="submit"
-          className="w-full p-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-black font-semibold transition duration-300"
+          className="w-full p-3 rounded-xl bg-cyan-700 hover:bg-cyan-700 text-black font-semibold transition duration-300 cursor-pointer"
         >
           ➕ Create Repository
         </button>

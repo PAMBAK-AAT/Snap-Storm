@@ -16,28 +16,41 @@ const { pushRepo } = require("./push");
 
 const { s3, S3_BUCKET } = require("../config/aws-config");
 
+
 // GET /repo/:id/file/:filename
+
 async function getFileContentFromS3(req, res) {
   const { id, filename } = req.params;
+  const { commit } = req.query; // ✅ Optional commit ID
 
   try {
     const repo = await Repository.findById(id);
     if (!repo) return res.status(404).json({ error: "Repository not found" });
 
-    // 🔍 Try to match filename exactly (case-insensitive matching optional)
-    const fileObj = repo.content.find(
-      (f) => f.originalName === filename
-      // Optional: f.originalName.toLowerCase() === filename.toLowerCase()
-    );
+    let fileObj;
+
+    if (commit) {
+      // ✅ Find exact match for commit version
+      fileObj = repo.content.find(
+        (f) => f.originalName === filename && f.commitId === commit
+      );
+    } else {
+      // ✅ Get latest version if no commit specified
+      const allVersions = repo.content.filter((f) => f.originalName === filename);
+      if (allVersions.length === 0) {
+        return res.status(404).json({ error: "File not found in metadata" });
+      }
+
+      fileObj = allVersions.sort(
+        (a, b) => new Date(b.date) - new Date(a.date)
+      )[0]; // latest
+    }
 
     if (!fileObj) {
-      console.warn("🚫 File not found in metadata for:", filename);
-      return res.status(404).json({ error: "File not found in metadata" });
+      return res.status(404).json({ error: "File version not found." });
     }
 
     const s3Key = `commits/${fileObj.commitId}/${fileObj.storedName}`;
-    console.log("🔑 Fetching S3 file using key:", s3Key);
-
     const params = {
       Bucket: S3_BUCKET,
       Key: s3Key,
@@ -45,19 +58,24 @@ async function getFileContentFromS3(req, res) {
 
     const data = await s3.getObject(params).promise();
 
-    // ✅ Send file content as plain text
-    res.setHeader("Content-Type", "text/plain");
-    return res.send(data.Body.toString("utf-8"));
+    // 🔍 Fetch commit message
+    const commitJsonKey = `commits/${fileObj.commitId}/commit.json`;
+    const commitData = await s3.getObject({
+      Bucket: S3_BUCKET,
+      Key: commitJsonKey,
+    }).promise();
 
+    const commitMessage = JSON.parse(commitData.Body.toString("utf-8")).message;
+
+    res.status(200).json({
+      fileContent: data.Body.toString("utf-8"),
+      commitMessage,
+    });
   } catch (err) {
     console.error("❌ Error fetching file from S3:", err.code || err.message);
-
     if (err.code === "NoSuchKey") {
-      return res.status(404).json({
-        error: "File not found in S3. Check commitId or stored filename.",
-      });
+      return res.status(404).json({ error: "File not found in S3" });
     }
-
     return res.status(500).json({ error: "Internal server error" });
   }
 }
@@ -65,46 +83,52 @@ async function getFileContentFromS3(req, res) {
 
 
 async function pushToRepository(req, res) {
-  const { id } = req.params;
-  const commitMessage = req.body.message;
-  const file = req.file;
 
-  if (!file || !commitMessage) {
-    return res.status(400).json({ error: "File and message are required" });
-  }
+    const { id } = req.params;
+    const commitMessage = req.body.message;
+    const file = req.file;
 
-  try {
-    const originalPath = path.join(process.cwd(), file.path);
+    if (!file || !commitMessage) {
+        return res.status(400).json({ error: "File and message are required" });
+    }
 
-    // 1. Add to staging
-    await addRepo(originalPath);
+    try {
+        const originalPath = path.join(process.cwd(), file.path);
 
-    // 2. Commit and get commit ID
-    const latestCommitId = await commitRepo(commitMessage); // ✅ get commitId
+        // 1. Add to staging
+        await addRepo(originalPath);
 
-    // 3. Push to S3
-    await pushRepo(latestCommitId);
+        // 2. Commit and get commit ID
+        const latestCommitId = await commitRepo(commitMessage); // ✅ get commitId
 
-    // 4. Update DB with file metadata
-    await Repository.findByIdAndUpdate(id, {
-      $push: {
-        content: {
-          originalName: file.originalname,
-          storedName: file.filename,
-          commitId: latestCommitId,
-        },
-      },
-    });
+        // 3. Push to S3
+        await pushRepo(latestCommitId);
 
-    // 5. Cleanup
-    await fs.unlink(originalPath);
+        // 4. Update DB with file metadata
+        await Repository.findByIdAndUpdate(id, {
+            $push: {
+                content: {
+                    originalName: file.originalname,
+                    storedName: file.filename,
+                    commitId: latestCommitId,
+                    date: new Date(),
+                },
+            },
+        });
 
-    res.status(200).json({ message: "✅ File pushed successfully and repo updated." });
-  } catch (err) {
-    console.error("❌ Error pushing file:", err);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+
+
+        // 5. Cleanup
+        await fs.unlink(originalPath);
+
+        res.status(200).json({ message: "✅ File pushed successfully and repo updated." });
+    } catch (err) {
+        console.error("❌ Error pushing file:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 }
+
+
 
 async function createRepository(req, res) {
 

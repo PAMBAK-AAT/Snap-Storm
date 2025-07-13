@@ -3,7 +3,6 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
-// Define the schema for a file commit
 const FileCommitSchema = new Schema({
   originalName: {
     type: String,

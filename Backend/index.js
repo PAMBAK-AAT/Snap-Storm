@@ -119,8 +119,6 @@ function startServer(){
 
     // Socket.io is a JavaScript library that enables real-time, bidirectional communication between clients (e.g., web browsers) and a server.
 
-    let user = "Muhammad"; // Default user value
-
     // Purpose: Allows both HTTP and WebSocket connections. We create an HTTP server using Express so that both HTTP requests and WebSocket connections can work together.
     const httpServer = http.createServer(app);
 

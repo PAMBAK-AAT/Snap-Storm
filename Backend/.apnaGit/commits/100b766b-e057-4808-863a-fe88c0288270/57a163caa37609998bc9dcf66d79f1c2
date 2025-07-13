@@ -3,7 +3,6 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose; // It is used to create a schema for our model
 
-// Define the schema for a file commit
 const UserSchema = new Schema({
 
     username:{

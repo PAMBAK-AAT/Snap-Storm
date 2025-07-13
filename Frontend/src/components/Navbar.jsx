@@ -17,9 +17,9 @@ const Navbar = () => {
       </Link>
 
       {/* Navigation Links */}
-      <div className="flex gap-4 text-sm items-center">
+      <div className="flex gap-4  items-center">
         <Link to="/create-repo">
-          <button className="bg-cyan-500 text-black px-4 py-2 rounded-xl hover:bg-cyan-600 transition">
+          <button className="bg-gray-500 text-yellow-700 text-md cursor-pointer px-4 py-2 rounded-xl hover:bg-gray-200 transition">
             ➕ New Repo
           </button>
         </Link>

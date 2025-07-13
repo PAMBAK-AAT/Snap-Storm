@@ -8,6 +8,8 @@ import {
   LogInIcon,
 } from "lucide-react";
 
+
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,7 +20,7 @@ const Login = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const res = await axios.post("http://localhost:3000/login", {
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/login`, {
         email,
         password,
       });
