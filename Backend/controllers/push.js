@@ -1,16 +1,17 @@
-// 📁 push.js (safe, commit-specific S3 upload)
+
 
 const fs = require("fs").promises;
 const path = require("path");
 const { s3, S3_BUCKET } = require("../config/aws-config");
 
 /**
- * Push a specific commit (folder) to S3.
+ * Push a specific commit (folder) to S3 and clean up local folders after.
  * @param {string} commitId - UUID of the commit folder to upload.
  */
 async function pushRepo(commitId) {
   const repoPath = path.resolve(process.cwd(), ".apnaGit");
   const commitDir = path.join(repoPath, "commits", commitId);
+  const stagingDir = path.join(repoPath, "stagings");
 
   try {
     const files = await fs.readdir(commitDir);
@@ -27,10 +28,14 @@ async function pushRepo(commitId) {
       };
 
       await s3.upload(params).promise();
-      console.log(`✅ Uploaded to S3 → ${s3Key}`);
     }
 
-    console.log(`✅ Successfully pushed commit ${commitId} to S3.`);
+    // ✅ Delete the local commit folder after successful push
+    await fs.rm(commitDir, { recursive: true, force: true });
+
+    // ✅ Delete the entire staging folder (optional)
+    await fs.rm(stagingDir, { recursive: true, force: true });
+
   } catch (err) {
     console.error(`❌ Error pushing commit ${commitId} to S3:`, err.message);
     throw err;
@@ -38,5 +43,3 @@ async function pushRepo(commitId) {
 }
 
 module.exports = { pushRepo };
-
-

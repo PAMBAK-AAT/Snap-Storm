@@ -1,3 +1,7 @@
+
+
+
+
 import React from "react";
 import { Link } from "react-router-dom";
 
@@ -7,7 +11,7 @@ const Navbar = () => {
       {/* Logo */}
       <Link to="/" className="flex items-center gap-2 cursor-pointer">
         <img
-          src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+          src="/logo.svg"
           alt="Snap-Storm Logo"
           className="w-6 h-6 drop-shadow"
         />

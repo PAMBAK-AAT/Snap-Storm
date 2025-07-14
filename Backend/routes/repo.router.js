@@ -23,6 +23,8 @@ repoRouter.put("/repo/update/:id", repoController.updateRepositoryById);
 
 repoRouter.post("/repo/:id/push", upload.single("file"), repoController.pushToRepository);
 repoRouter.get("/repo/:id/file/:filename", repoController.getFileContentFromS3);
+repoRouter.delete("/repo/:repoId/file/:filename/:commitId", repoController.deleteFileVersion);
+
 
 
 

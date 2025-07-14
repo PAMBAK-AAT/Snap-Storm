@@ -19,65 +19,80 @@ const { s3, S3_BUCKET } = require("../config/aws-config");
 
 // GET /repo/:id/file/:filename
 
+async function fetchRepositoryById(req, res) {
+    const { id } = req.params;
+    try {
+
+        const repository = await Repository.findOne({ _id: id }).populate("owner").populate("issues");
+        if (!repository) {
+            return res.status(404).json({ message: "Repository not found." });
+        }
+        res.status(200).json(repository);
+
+    } catch (err) {
+        console.error("Error fetching repository by ID:", err.message);
+        res.status(500).send("Internal Server Error");
+    }
+}
 async function getFileContentFromS3(req, res) {
-  const { id, filename } = req.params;
-  const { commit } = req.query; // ✅ Optional commit ID
+    const { id, filename } = req.params;
+    const { commit } = req.query; // ✅ Optional commit ID
 
-  try {
-    const repo = await Repository.findById(id);
-    if (!repo) return res.status(404).json({ error: "Repository not found" });
+    try {
+        const repo = await Repository.findById(id);
+        if (!repo) return res.status(404).json({ error: "Repository not found" });
 
-    let fileObj;
+        let fileObj;
 
-    if (commit) {
-      // ✅ Find exact match for commit version
-      fileObj = repo.content.find(
-        (f) => f.originalName === filename && f.commitId === commit
-      );
-    } else {
-      // ✅ Get latest version if no commit specified
-      const allVersions = repo.content.filter((f) => f.originalName === filename);
-      if (allVersions.length === 0) {
-        return res.status(404).json({ error: "File not found in metadata" });
-      }
+        if (commit) {
+            // ✅ Find exact match for commit version
+            fileObj = repo.content.find(
+                (f) => f.originalName === filename && f.commitId === commit
+            );
+        } else {
+            // ✅ Get latest version if no commit specified
+            const allVersions = repo.content.filter((f) => f.originalName === filename);
+            if (allVersions.length === 0) {
+                return res.status(404).json({ error: "File not found in metadata" });
+            }
 
-      fileObj = allVersions.sort(
-        (a, b) => new Date(b.date) - new Date(a.date)
-      )[0]; // latest
+            fileObj = allVersions.sort(
+                (a, b) => new Date(b.date) - new Date(a.date)
+            )[0]; // latest
+        }
+
+        if (!fileObj) {
+            return res.status(404).json({ error: "File version not found." });
+        }
+
+        const s3Key = `commits/${fileObj.commitId}/${fileObj.storedName}`;
+        const params = {
+            Bucket: S3_BUCKET,
+            Key: s3Key,
+        };
+
+        const data = await s3.getObject(params).promise();
+
+        // 🔍 Fetch commit message
+        const commitJsonKey = `commits/${fileObj.commitId}/commit.json`;
+        const commitData = await s3.getObject({
+            Bucket: S3_BUCKET,
+            Key: commitJsonKey,
+        }).promise();
+
+        const commitMessage = JSON.parse(commitData.Body.toString("utf-8")).message;
+
+        res.status(200).json({
+            fileContent: data.Body.toString("utf-8"),
+            commitMessage,
+        });
+    } catch (err) {
+        console.error("❌ Error fetching file from S3:", err.code || err.message);
+        if (err.code === "NoSuchKey") {
+            return res.status(404).json({ error: "File not found in S3" });
+        }
+        return res.status(500).json({ error: "Internal server error" });
     }
-
-    if (!fileObj) {
-      return res.status(404).json({ error: "File version not found." });
-    }
-
-    const s3Key = `commits/${fileObj.commitId}/${fileObj.storedName}`;
-    const params = {
-      Bucket: S3_BUCKET,
-      Key: s3Key,
-    };
-
-    const data = await s3.getObject(params).promise();
-
-    // 🔍 Fetch commit message
-    const commitJsonKey = `commits/${fileObj.commitId}/commit.json`;
-    const commitData = await s3.getObject({
-      Bucket: S3_BUCKET,
-      Key: commitJsonKey,
-    }).promise();
-
-    const commitMessage = JSON.parse(commitData.Body.toString("utf-8")).message;
-
-    res.status(200).json({
-      fileContent: data.Body.toString("utf-8"),
-      commitMessage,
-    });
-  } catch (err) {
-    console.error("❌ Error fetching file from S3:", err.code || err.message);
-    if (err.code === "NoSuchKey") {
-      return res.status(404).json({ error: "File not found in S3" });
-    }
-    return res.status(500).json({ error: "Internal server error" });
-  }
 }
 
 
@@ -103,7 +118,7 @@ async function pushToRepository(req, res) {
 
         // 3. Push to S3
         await pushRepo(latestCommitId);
-
+        
         // 4. Update DB with file metadata
         await Repository.findByIdAndUpdate(id, {
             $push: {
@@ -120,6 +135,7 @@ async function pushToRepository(req, res) {
 
         // 5. Cleanup
         await fs.unlink(originalPath);
+
 
         res.status(200).json({ message: "✅ File pushed successfully and repo updated." });
     } catch (err) {
@@ -193,23 +209,6 @@ async function getAllRepository(req, res) {
     }
 }
 
-async function fetchRepositoryById(req, res) {
-    const { id } = req.params;
-    try {
-        const repository = await Repository.find({ _id: id })
-            .populate("owner")
-            .populate("issues");
-
-        if (!repository) {
-            return res.status(404).json({ message: "Repository not found." });
-        }
-
-        res.status(200).json(repository);
-    } catch (err) {
-        console.error("Error fetching repository by ID:", err.message);
-        res.status(500).send("Internal Server Error");
-    }
-}
 
 async function fetchRepositoryByName(req, res) {
     const { name } = req.params;
@@ -313,6 +312,45 @@ async function deleteRepository(req, res) {
     }
 }
 
+async function deleteFileVersion(req, res) {
+    const { repoId, filename, commitId } = req.params;
+
+    try {
+        const repo = await Repository.findById(repoId);
+        if (!repo) {
+            return res.status(404).json({ error: "Repository not found" });
+        }
+
+        // Find the specific file object
+        const fileToDelete = repo.content.find(
+            (file) => file.originalName === filename && file.commitId === commitId
+        );
+
+        if (!fileToDelete) {
+            return res.status(404).json({ error: "File/commit not found" });
+        }
+
+        // 1️⃣ Delete the file from S3
+        const fileKey = `commits/${commitId}/${fileToDelete.storedName}`;
+        const commitJsonKey = `commits/${commitId}/commit.json`;
+
+        await s3.deleteObject({ Bucket: S3_BUCKET, Key: fileKey }).promise();
+        await s3.deleteObject({ Bucket: S3_BUCKET, Key: commitJsonKey }).promise();
+
+        // 2️⃣ Remove the file metadata from the repository content
+        repo.content = repo.content.filter(
+            (file) => !(file.originalName === filename && file.commitId === commitId)
+        );
+
+        await repo.save();
+
+        res.status(200).json({ message: "File version deleted successfully." });
+    } catch (error) {
+        console.error("❌ Failed to delete file version:", error.message || error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
 // deleteRepository, toggleVisibilityById, updateRepositoryById, fetchRepositoryForCurrentUser, createRepository -> All these are Authenticated routes
 // getAllRepository, fetchRepositoryById, fetchRepositoryByName -> These routes can beaccessed by everyone provided that the repo should be public.
 
@@ -327,5 +365,6 @@ module.exports = {
     fetchRepositoryById,
     fetchRepositoryByName,
     pushToRepository,
-    getFileContentFromS3
+    getFileContentFromS3,
+    deleteFileVersion
 }

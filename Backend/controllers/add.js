@@ -12,7 +12,7 @@ async function addRepo(filePath){
         await fs.mkdir(stagingPath, {recursive: true});
         const fileName = path.basename(filePath); // here we extract the name of the file from the filePath that is provided by the user...
         await fs.copyFile(filePath, path.join(stagingPath, fileName))
-        console.log(`File ${fileName} added in the staging folder.`)
+        // console.log(`File ${fileName} added in the staging folder.`)
 
     } catch (error) {
         

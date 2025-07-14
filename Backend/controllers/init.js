@@ -22,7 +22,7 @@ async function initRepo(){
             JSON.stringify( {bucket : process.env.S3_bucket}) // This converts an object containing an environment variable (S3_bucket) into a JSON string. 
             // process.env holds environment variables in Node.js. S3_bucket is an environment variable that stores the name of an AWS S3 bucket.
         );
-        console.log("Repository Initialised...");
+        // console.log("Repository Initialised...");
     } catch (error) {
         console.log("Error in initialising the repo", error);
     }
