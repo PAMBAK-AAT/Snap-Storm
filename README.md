@@ -5,14 +5,47 @@ A modern GitHub-like full-stack project built with **React**, **Node.js**, **Mon
 ---
 
 ### 🚀 Live Preview
+<div align="center">
+  <a href="https://snapstorm.netlify.app/"><strong>🌍 Live Project</strong></a> • 
+  <a href="https://github.com/PAMBAK-AAT/Snap-Storm"><strong>📁 Source Code</strong></a>
+</div>
 
-> Coming Soon...
+## 🧩 Overview
+
+**Snap Storm** is a full-stack, GitHub-inspired platform where users can:
+
+- 📂 Create public/private repositories  
+- 💾 Upload versioned files with commit messages  
+- ⏪ Browse file history across all commits  
+- ☁️ Store and retrieve code via AWS S3  
+- 🎨 Explore an interactive and visually appealing interface  
+
+It’s a completely custom-built, Git-like system that mimics essential version control functionality for code collaboration, learning, and showcasing purposes.
+
+Core Logic Flow ->
+
+File → Add (Staging) → Commit (Snapshot + message) → Push (to AWS S3)
+                              ↓
+                     Stored per-commit in:
+             s3://snap-storm-bucket/commits/<commitId>/
 
 ---
 
-## 📸 Demo Preview (GIF/Screenshots)
+## 🚀 Tech Stack
 
-> *You can upload GIFs or screenshots here showing repository creation, file push, viewing commits, etc.*
+### Frontend
+- ⚛️ React.js + React Router
+- 💨 Tailwind CSS (Dark theme, responsive)
+- 🎨 Lucide Icons
+- 🌌 tsParticles (background animation)
+- 🌐 Hosted on Netlify
+
+### Backend
+- 🟢 Node.js + Express.js
+- 🛢 MongoDB + Mongoose
+- ☁️ AWS S3 SDK (secure file storage)
+- 🧠 Custom Git-like CLI logic (init, add, commit, push, revert)
+- 🌐 Hosted on Render
 
 ---
 
@@ -31,38 +64,17 @@ A modern GitHub-like full-stack project built with **React**, **Node.js**, **Mon
 
 ## 🛠️ Features
 
-* ✅ User authentication (JWT + LocalStorage)
-* ✅ Create public or private repositories
-* ✅ Upload files with commit messages (like Git)
-* ✅ View all previous versions of any file
-* ✅ Each file version is uniquely commit-stamped
-* ✅ All files stored safely on **AWS S3**
-* ✅ File explorer UI with code preview
-* ✅ Commit history and message display
-* ✅ Issue system (basic integration with `Issue` model)
-* ✅ Responsive dark-themed UI using Tailwind CSS
-* ✅ Neon animated particle background
+- 🔐 JWT-based user authentication
+- ✅ Public/private repository creation
+- 📤 Upload and commit files with messages
+- ⏳ View file versions by commit ID
+- ☁️ All data securely stored on AWS S3
+- 🔎 Clean file explorer and code preview
+- 📝 View commit messages per file
+- 🧾 Basic issue system integration
+- 🌑 Modern dark-themed UI with glowing particle animation
+- 📱 Fully responsive for mobile and desktop
 
----
-
-## 📦 Tech Stack
-
-### Frontend:
-
-* ⚛️ React.js + React Router
-* 💨 Tailwind CSS
-* 🧠 Zustand (for future state mgmt)
-* 🎨 Lucide Icons
-* 🌈 Particles.js (for animated background)
-
-### Backend:
-
-* 🟢 Node.js + Express
-* 🌐 MongoDB + Mongoose
-* 🧾 Multer (for file upload handling)
-* ☁️ AWS S3 SDK (for cloud storage)
-
----
 
 ## 🧑‍💻 Getting Started
 
@@ -135,31 +147,33 @@ npm run dev
 ```
 Snap-Storm/
 ├── backend/
-│   ├── config/
-│   ├── controllers/
-│   ├── models/
-│   ├── routes/
-│   └── utils/
+│ ├── config/
+│ ├── controllers/
+│ ├── models/
+│ ├── routes/
+│ ├── .env (not included in repo)
+│ └── index.js
 ├── frontend/
-│   ├── components/
-│   ├── pages/
-│   ├── assets/
-│   └── App.jsx
+│ ├── components/
+│ ├── pages/
+│ ├── assets/
+│ ├── .env (not included in repo)
+│ └── App.jsx
 └── README.md
-```
 
 ---
 
 
-## 📌 Future Improvements
+📌 Future Roadmap
+🔐 OAuth login via Google or GitHub
 
-* ✅ Better UI for commit diffs
-* ✅ User profile pages with contribution graph
-* 🔐 OAuth login via GitHub or Google
-* 🔍 Full-text file search
-* 📁 Directory view like GitHub
-* 🐛 Advanced Issue tracking system
-* 🧪 Unit + Integration testing (Jest / Supertest)
+🔍 Full-text search across files and  adding pull, revert  commands also with issue repo.
+
+📁 GitHub-like directory navigation
+
+📊 User profile stats (contribution graph)
+
+🐞 Enhanced issue tracking with filters
 
 ---
 
@@ -175,7 +189,7 @@ MIT License © 2025 [@PAMBAK-AAT](https://github.com/PAMBAK-AAT)
 
 ---
 
-## 📬 Contact
-
-If you have any questions or suggestions:
-📧 **Arshad** – [github.com/PAMBAK-AAT](https://github.com/PAMBAK-AAT)
+📬 Contact
+Arshad
+📫 github.com/PAMBAK-AAT
+🌍 Live Demo
